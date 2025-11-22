@@ -1,7 +1,7 @@
 // DraftVerify front-end (GitHub hosted)
 
 // app.js
-const API_URL = "https://script.google.com/macros/s/AKfycbzoND-aB_hEYpmWrOnRmGoQoLicquaJ53k6-KW19cr_OK2zX8fIGDCcyJWXMrLQpzlHug/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxGmDJSiD0hG4KQmQq8nZ-mHQ5uh7rOwbYfDILK8s9A99QMStRQTIV95J0MohX8tsfHIA/exec";
 
 
 document.addEventListener("DOMContentLoaded", function () {
