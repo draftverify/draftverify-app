@@ -1,7 +1,7 @@
 // === CONFIG ===
 // TODO: replace this with your live Apps Script web app URL.
 const API_BASE =
-  "https://script.google.com/macros/s/AKfycbx1TY4dp8LBDrgwc8kNcEbMKumZlSQXjMhRpcRJLk_UhkXFvtfoz51FVRddG53vb5PG0w/exec";
+  "https://script.google.com/macros/s/AKfycbzQ0jS5iRcYd1KaFLoGPPxj4uZoSrbCzWyT-DYfTIur1eKCoNLbSsRlROTQn7zXQFkTpg/exec";
 
 // === Helpers: URL & DOM ===
 function getTagFromUrl() {
