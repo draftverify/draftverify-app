@@ -4,7 +4,7 @@
 // ==============================
 
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbwKkSetsObgwrgJyLfzApkDpmdkKU0hhZtu8gp5TllwUbzQvbGxpRemCn7RuajQx26Dsw/exec";
+  "https://script.google.com/macros/s/AKfycbwM94nUe2DvXvoFDWEMm7PjDgC7WpLbBKJA2L4-qzyIhUb781uSoBHwxSQQDngLbXQJog/exec";
 
 // DOM refs
 const app = document.getElementById("dv-app");
