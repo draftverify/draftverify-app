@@ -1,219 +1,188 @@
-// === CONFIG ===
-// TODO: replace this with your live Apps Script web app URL.
-const API_BASE =
+// DraftVerify front-end (GitHub hosted)
+
+const API_URL =
   "https://script.google.com/macros/s/AKfycbzskZPDUt_1O_ZyZIftnEG_cHLd3Ai1H5g5uFGKFwEuPzATTjesX4mqeC2oTnb4dbNgPw/exec";
 
-// === Helpers: URL & DOM ===
-function getTagFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const tag = params.get("tag");
-  return tag && tag.trim() !== "" ? tag.trim() : null;
-}
+document.addEventListener("DOMContentLoaded", function () {
+  var params = new URLSearchParams(window.location.search);
+  var tagId = params.get("tag");
 
-function $(id) {
-  return document.getElementById(id);
-}
-
-// === UI State ===
-function setStatus(text, variant = "idle") {
-  const pill = $("status-pill");
-  if (!pill) return;
-
-  pill.textContent = text;
-
-  pill.classList.remove("pill-ok", "pill-bad", "pill-muted");
-  if (variant === "ok") pill.classList.add("pill-ok");
-  else if (variant === "bad") pill.classList.add("pill-bad");
-  else pill.classList.add("pill-muted");
-}
-
-function setLoading(isLoading) {
-  const loading = $("loading");
-  const btn = $("verify-btn");
-  if (!loading || !btn) return;
-
-  if (isLoading) {
-    loading.classList.remove("hidden");
-    btn.disabled = true;
-  } else {
-    loading.classList.add("hidden");
-    btn.disabled = false;
-  }
-}
-
-function showError(message) {
-  const box = $("error-box");
-  if (!box) return;
-  box.textContent = message;
-  box.classList.remove("hidden");
-}
-
-function clearError() {
-  const box = $("error-box");
-  if (!box) return;
-  box.textContent = "";
-  box.classList.add("hidden");
-}
-
-function renderEmptyState() {
-  const container = $("result-content");
-  if (!container) return;
-  container.className = "result-content result-empty";
-  container.innerHTML =
-    '<p class="muted">Waiting for a tag. Tap an NFC tag or enter a Tag ID to begin.</p>';
-}
-
-// Render based on parsed data & raw fallback
-function renderResult(parsed, rawText) {
-  const container = $("result-content");
-  if (!container) return;
-
-  clearError();
-
-  // If we have structured data that looks like our registry row, use that
-  if (
-    parsed &&
-    (parsed.tagId || parsed.tag || parsed.brewery || parsed.product)
-  ) {
-    const tagId = parsed.tagId || parsed.tag || "Unknown";
-    const type = parsed.type || parsed.deviceType || "Tag";
-    const brewery = parsed.brewery || parsed.brand || "Unknown";
-    const product = parsed.product || parsed.beer || "Unknown";
-    const line = parsed.line || parsed.lineNumber || "—";
-    const location = parsed.location || parsed.site || "—";
-    const status = parsed.status || parsed.state || "verified";
-
-    // Status mapping
-    if (String(status).toLowerCase().includes("fail")) {
-      setStatus("Flagged", "bad");
-    } else if (String(status).toLowerCase().includes("not")) {
-      setStatus("Not found", "bad");
-    } else {
-      setStatus("Verified", "ok");
-    }
-
-    container.className = "result-content";
-    container.innerHTML = `
-      <p class="mono small muted" style="margin-bottom:6px;">
-        Response: ${status}
-      </p>
-      <div class="result-grid">
-        <div class="result-label">Tag ID</div>
-        <div class="result-value mono">${tagId}</div>
-
-        <div class="result-label">Type</div>
-        <div class="result-value">${type}</div>
-
-        <div class="result-label">Brewery</div>
-        <div class="result-value">${brewery}</div>
-
-        <div class="result-label">Product</div>
-        <div class="result-value">${product}</div>
-
-        <div class="result-label">Line</div>
-        <div class="result-value">${line}</div>
-
-        <div class="result-label">Location</div>
-        <div class="result-value">${location}</div>
-      </div>
-    `;
-  } else {
-    // Fallback: show raw text
-    setStatus("Result", "idle");
-    container.className = "result-content";
-    container.innerHTML = `
-      <p class="result-label">Server response</p>
-      <pre class="result-value mono" style="white-space:pre-wrap;word-wrap:break-word;">${rawText}</pre>
-    `;
-  }
-}
-
-// === Network ===
-async function verifyTag(tagId) {
-  if (!tagId || tagId.trim() === "") {
-    showError("Please enter a Tag ID.");
+  if (!tagId) {
+    renderNoTag();
     return;
   }
 
-  clearError();
-  setStatus("Checking…", "idle");
-  setLoading(true);
+  loadVerification(tagId);
+});
 
-  try {
-    const url = `${API_BASE}?tag=${encodeURIComponent(tagId.trim())}`;
-    const res = await fetch(url, {
-      method: "GET",
-      mode: "cors",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Server returned ${res.status}`);
-    }
-
-    const rawText = await res.text();
-    let parsed = null;
-
-    try {
-      parsed = JSON.parse(rawText);
-    } catch {
-      // Not JSON; that's okay, we'll just show raw text
-    }
-
-    renderResult(parsed, rawText);
-  } catch (err) {
-    console.error(err);
-    setStatus("Error", "bad");
-    showError("Unable to verify this tag right now. Please try again.");
-  } finally {
-    setLoading(false);
+function setLoading(isLoading) {
+  var app = document.getElementById("dv-app");
+  if (!app) return;
+  if (isLoading) {
+    app.classList.add("dv-loading");
+  } else {
+    app.classList.remove("dv-loading");
   }
 }
 
-// === Init ===
-document.addEventListener("DOMContentLoaded", () => {
-  const input = $("tag-input");
-  const btn = $("verify-btn");
-  const urlDisplay = $("url-tag-display");
+function setStatus(status) {
+  var pill = document.getElementById("dv-status-pill");
+  var text = document.getElementById("dv-status-text");
+  if (!pill || !text) return;
 
-  // Wire button
-  if (btn && input) {
-    btn.addEventListener("click", () => {
-      const value = input.value;
-      verifyTag(value);
-    });
+  pill.classList.remove("dv-pill-ok", "dv-pill-warn", "dv-pill-info");
 
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        verifyTag(input.value);
-      }
-    });
-  }
-
-  // Initial state
-  renderEmptyState();
-  setStatus("Idle", "idle");
-  clearError();
-  setLoading(false);
-
-  // Check URL tag parameter (for NFC)
-  const tagFromUrl = getTagFromUrl();
-  if (tagFromUrl) {
-    if (urlDisplay) {
-      urlDisplay.textContent = tagFromUrl;
-      urlDisplay.classList.remove("empty");
-    }
-
-    if (input) {
-      input.value = tagFromUrl;
-    }
-
-    // Auto-verify when arrived via NFC / link
-    verifyTag(tagFromUrl);
+  if (status === "ok") {
+    pill.classList.add("dv-pill-ok");
+    text.textContent = "Verified";
+  } else if (status === "warn") {
+    pill.classList.add("dv-pill-warn");
+    text.textContent = "Check required";
   } else {
-    if (urlDisplay) {
-      urlDisplay.textContent = "No tag detected";
-      urlDisplay.classList.add("empty");
+    pill.classList.add("dv-pill-info");
+    text.textContent = "DraftVerify";
+  }
+}
+
+function renderNoTag() {
+  setLoading(false);
+  setStatus("info");
+
+  var title = document.getElementById("dv-title");
+  var subtitle = document.getElementById("dv-subtitle");
+  var card = document.getElementById("dv-card");
+  var error = document.getElementById("dv-error");
+
+  if (title) {
+    title.textContent = "No tag detected";
+  }
+  if (subtitle) {
+    subtitle.textContent =
+      "This link is missing a tag ID. Make sure your NFC tag URL includes ?tag=YOUR_TAG_ID.";
+  }
+  if (card) {
+    card.innerHTML =
+      '<p class="dv-label">Example URL</p>' +
+      '<p class="dv-value">https://app.draftverify.com/?tag=NRS-0001</p>' +
+      '<p class="dv-footer-note">Program this URL into your NFC tag using an NFC writer app.</p>';
+  }
+  if (error) {
+    error.hidden = true;
+  }
+}
+
+async function loadVerification(tagId) {
+  setLoading(true);
+  setStatus("info");
+
+  var title = document.getElementById("dv-title");
+  var subtitle = document.getElementById("dv-subtitle");
+  var card = document.getElementById("dv-card");
+  var error = document.getElementById("dv-error");
+
+  if (title) {
+    title.textContent = "Checking tag…";
+  }
+  if (subtitle) {
+    subtitle.textContent = "Verifying this tag with DraftVerify.";
+  }
+  if (error) {
+    error.hidden = true;
+    error.textContent = "";
+  }
+
+  try {
+    var url = API_URL + "?tag=" + encodeURIComponent(tagId);
+    console.log("Calling DraftVerify API:", url);
+
+    var res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error("Network response was not ok (status " + res.status + ")");
+    }
+
+    var data = await res.json();
+    console.log("DraftVerify API response:", data);
+
+    setLoading(false);
+
+    if (!data || data.ok === false) {
+      // Basic fallback if API sends ok:false
+      setStatus("warn");
+      if (title) {
+        title.textContent = "Unable to verify";
+      }
+      if (subtitle) {
+        subtitle.textContent =
+          "The DraftVerify service returned an error. Try again or contact support.";
+      }
+      if (card) {
+        card.innerHTML =
+          '<p class="dv-label">Tag ID</p>' +
+          '<p class="dv-value">' +
+          tagId +
+          "</p>" +
+          '<p class="dv-footer-note">If this keeps happening, your DraftVerify admin can check the Google Sheet configuration.</p>';
+      }
+      if (error) {
+        error.hidden = false;
+        error.textContent = "Service error from DraftVerify backend.";
+      }
+      return;
+    }
+
+    // Use status from API (info / warn / ok)
+    setStatus(data.status);
+
+    if (title) {
+      title.textContent = data.title || "DraftVerify";
+    }
+    if (subtitle) {
+      subtitle.textContent =
+        data.subtitle || "Verification details are shown below.";
+    }
+    if (card) {
+      if (data.detailsHtml) {
+        // data.detailsHtml is HTML built by Apps Script (uses dv-label, dv-value, etc.)
+        card.innerHTML = data.detailsHtml;
+      } else {
+        card.innerHTML =
+          '<p class="dv-label">Tag ID</p>' +
+          '<p class="dv-value">' +
+          tagId +
+          "</p>" +
+          '<p class="dv-footer-note">No extra details were returned by the backend.</p>';
+      }
+    }
+
+    if (error) {
+      error.hidden = true;
+      error.textContent = "";
+    }
+  } catch (err) {
+    console.error("Error calling DraftVerify API:", err);
+    setLoading(false);
+    setStatus("warn");
+
+    if (title) {
+      title.textContent = "Unable to verify";
+    }
+    if (subtitle) {
+      subtitle.textContent =
+        "There was a problem contacting the DraftVerify backend.";
+    }
+    if (card) {
+      card.innerHTML =
+        '<p class="dv-label">Tag ID</p>' +
+        '<p class="dv-value">' +
+        tagId +
+        "</p>" +
+        '<p class="dv-footer-note">Check your connection and try again. If this persists, your DraftVerify admin can check the Apps Script deployment.</p>';
+    }
+    var error = document.getElementById("dv-error");
+    if (error) {
+      error.hidden = false;
+      error.textContent = err.message || "Unknown error.";
     }
   }
-});
+}
