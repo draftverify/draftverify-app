@@ -1,93 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>DraftVerify</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="app-shell">
-    <header class="app-header">
-      <div class="logo-circle">DV</div>
-      <div class="header-text">
-        <h1>DraftVerify</h1>
-        <p class="subtitle">Instant draft line & keg verification</p>
-      </div>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <title>DraftVerify</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="dv-app">
+      <header class="dv-header">
+        <div class="dv-logo-mark">DV</div>
+        <div class="dv-logo-text">
+          <span class="dv-logo-title">DraftVerify</span>
+          <span class="dv-logo-subtitle">NA Draft Line Assurance</span>
+        </div>
+      </header>
 
-    <main class="app-main">
-      <!-- Tag Source Info -->
-      <section class="card card-compact" id="url-info-card">
-        <div class="card-header">
-          <span class="pill pill-soft">NFC / URL</span>
+      <main class="dv-main">
+        <!-- Status pill -->
+        <div id="dv-status-pill" class="dv-pill dv-pill-info">
+          <span class="dv-dot"></span>
+          <span id="dv-status-text">DraftVerify</span>
         </div>
-        <div class="card-body">
-          <p class="url-label">Tag detected from link:</p>
-          <p class="url-value" id="url-tag-display">No tag detected</p>
-        </div>
-      </section>
 
-      <!-- Manual Input -->
-      <section class="card" id="manual-card">
-        <div class="card-header">
-          <span class="pill">Manual check</span>
-          <h2>Enter a Tag ID</h2>
-        </div>
-        <div class="card-body">
-          <label for="tag-input" class="input-label">Tag ID</label>
-          <div class="input-row">
-            <input
-              type="text"
-              id="tag-input"
-              placeholder="e.g. NRS-0001"
-              autocomplete="off"
-            />
-            <button id="verify-btn" class="btn-primary">
-              Verify
-            </button>
-          </div>
-          <p class="helper-text">
-            You can tap an NFC tag or paste a link like
-            <span class="mono">?tag=NRS-0001</span>.
+        <!-- Title + subtitle -->
+        <h1 id="dv-title" class="dv-title">Ready to scan</h1>
+        <p id="dv-subtitle" class="dv-sub">
+          Hold your phone near a DraftVerify tag to begin.
+        </p>
+
+        <!-- Card for dynamic content -->
+        <section id="dv-card" class="dv-card">
+          <p class="dv-placeholder">
+            Waiting for tag ID from the URL. Make sure your NFC tag URL looks
+            like:
           </p>
-        </div>
-      </section>
+          <p class="dv-placeholder-code">
+            <code>https://app.draftverify.com/?tag=NRS-0001</code>
+          </p>
+        </section>
 
-      <!-- Status / Result -->
-      <section class="card" id="result-card">
-        <div class="card-header">
-          <h2>Verification Result</h2>
-          <span id="status-pill" class="pill pill-muted">Idle</span>
-        </div>
-        <div class="card-body">
-          <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <p>Checking tag against DraftVerify™ registry…</p>
-          </div>
+        <!-- Error message area -->
+        <p id="dv-error" class="dv-error" hidden></p>
 
-          <div id="result-content" class="result-content result-empty">
-            <p class="muted">
-              Waiting for a tag. Tap an NFC tag or enter a Tag ID to begin.
-            </p>
-          </div>
+        <!-- Footer -->
+        <footer class="dv-footer">
+          <p>Powered by DraftVerify · Prototype v0.1</p>
+        </footer>
+      </main>
+    </div>
 
-          <div id="error-box" class="error-box hidden"></div>
-        </div>
-      </section>
-
-      <!-- Debug / Meta -->
-      <section class="meta">
-        <p class="meta-line">
-          DraftVerify is a verification layer for non-alcoholic draft systems.
-        </p>
-        <p class="meta-line mono small">
-          Build: DV-Web v1.0 (GitHub Pages)
-        </p>
-      </section>
-    </main>
-  </div>
-
-  <script src="app.js"></script>
-</body>
+    <script src="app.js" defer></script>
+  </body>
 </html>
