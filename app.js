@@ -1,10 +1,10 @@
 // ==============================
-// DraftVerify Frontend – v0.2
-// Modern UI + animations + haptics + PWA hooks
+// DraftVerify Frontend – v0.3
+// Robust tag detection + animations + haptics + PWA hooks
 // ==============================
 
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbwbF0o9-zAbzuY-q-dItaIUrPjj1XV6ucMCMBXDaoSlTw8Pgn17LdApM2OEmQfCZ37mhA/exec";
+  "https://script.google.com/macros/s/AKfycby25kK5DuooJjTPJF7JmDJP-NWPu8aqWeJzYUfVz4-RL3HcRSE3I3KK7ArA2nwKi5S7JA/exec";
 
 // DOM refs
 const app = document.getElementById("dv-app");
@@ -17,9 +17,36 @@ const cardEl = document.getElementById("dv-card");
 const iconEl = document.getElementById("dv-icon");
 const loadingOverlay = document.getElementById("dv-loading-overlay");
 
-// ===============
-// Helper: status
-// ===============
+// ==============================
+// Helper: extract tag from URL
+// ==============================
+function getTagFromUrl() {
+  // Primary: URLSearchParams
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    const tag = params.get("tag");
+    if (tag) return tag;
+  } catch (e) {
+    // ignore
+  }
+
+  // Fallback: regex on full href (covers weird cases / redirects)
+  const href = window.location.href || "";
+  const match = href.match(/[?&]tag=([^&]+)/i);
+  if (match && match[1]) {
+    try {
+      return decodeURIComponent(match[1]);
+    } catch (e) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
+// ==============================
+// Helper: status styling
+// ==============================
 function setStatus(status) {
   // Reset classes
   app.classList.remove("dv-status-ok", "dv-status-warn", "dv-status-info");
@@ -44,7 +71,7 @@ function setStatus(status) {
   } else {
     app.classList.add("dv-status-info");
     pillEl.classList.add("dv-pill-info");
-    pillText = "Info";
+    pillText = "Checking tag";
     iconClass = "dv-icon-info";
     iconEmoji = "📡";
   }
@@ -61,30 +88,27 @@ function setStatus(status) {
   }
 }
 
-// ===============
+// ==============================
 // Helper: haptics
-// ===============
+// ==============================
 function triggerHaptics(status) {
   if (!("vibrate" in navigator)) return;
 
   if (status === "ok") {
-    // Short happy pulse
     navigator.vibrate([25, 40, 25]);
   } else if (status === "warn") {
-    // Stronger pattern
     navigator.vibrate([50, 40, 50]);
   } else {
     navigator.vibrate(20);
   }
 }
 
-// ===============
+// ==============================
 // Helper: animations
-// ===============
+// ==============================
 function playCardAnimation(status) {
   if (!cardEl) return;
 
-  // Clear previous animation classes
   cardEl.classList.remove("dv-animate-pop", "dv-animate-shake");
   void cardEl.offsetWidth; // force reflow
 
@@ -95,23 +119,34 @@ function playCardAnimation(status) {
   }
 }
 
-// ===============
+// ==============================
 // Main fetch logic
-// ===============
+// ==============================
 function loadVerification(tagId) {
   if (!tagId) {
-    setStatus("warn");
-    titleEl.textContent = "NO TAG DETECTED";
+    // No tag → idle screen
+    setStatus("info");
+    titleEl.textContent = "Scan a tag";
     subEl.textContent =
-      "This link does not contain a DraftVerify tag ID. Scan an official coupler or keg tag.";
+      "Tap a coupler or keg tag to check the NA draft line.";
     detailsEl.innerHTML =
-      "<p class='dv-label'>What to do</p>" +
-      "<p class='dv-value'>Ask your DraftVerify admin for a registered NFC tag.</p>";
-    playCardAnimation("warn");
+      "<p class='dv-label'>How it works</p>" +
+      "<p class='dv-value'>Tap the NA draft coupler, then tap the matching keg tag within 60 seconds to confirm the line is correctly paired.</p>";
+    playCardAnimation("info");
     return;
   }
 
-  // Show loading overlay
+  // Immediately show the tag ID so we know it was detected
+  titleEl.textContent = "Reading tag…";
+  subEl.textContent = "Please wait a moment.";
+  detailsEl.innerHTML =
+    "<p class='dv-label'>Tag ID</p>" +
+    `<p class='dv-value'>${tagId}</p>` +
+    "<p class='dv-footer-note'>If this screen doesn’t update, check your connection.</p>`;
+
+  setStatus("info");
+  playCardAnimation("info");
+
   if (loadingOverlay) {
     loadingOverlay.classList.remove("dv-hidden");
   }
@@ -133,10 +168,9 @@ function loadVerification(tagId) {
       setStatus(status);
       triggerHaptics(status);
 
-      const newTitle = data.title || "DraftVerify";
+      const newTitle = data.title || "Result";
       const newSub =
-        data.subtitle ||
-        "Verification details for this NA draft line are shown below.";
+        data.subtitle || "Verification details are shown below.";
       const detailsHtml = data.detailsHtml;
 
       titleEl.textContent = newTitle;
@@ -148,7 +182,7 @@ function loadVerification(tagId) {
         detailsEl.innerHTML =
           "<p class='dv-label'>Tag ID</p>" +
           `<p class='dv-value'>${tagId}</p>` +
-          "<p class='dv-footer-note'>No additional details returned by backend.</p>";
+          "<p class='dv-footer-note'>No additional details returned by the server.</p>";
       }
 
       playCardAnimation(status);
@@ -164,42 +198,32 @@ function loadVerification(tagId) {
 
       titleEl.textContent = "UNABLE TO VERIFY";
       subEl.textContent =
-        "There was a problem contacting the DraftVerify backend.";
+        "There was a problem contacting the server.";
 
       detailsEl.innerHTML =
         "<p class='dv-label'>Tag ID</p>" +
         `<p class='dv-value'>${tagId}</p>` +
-        "<p class='dv-footer-note'>Check your connection and try again. If this persists, your DraftVerify admin can review the Apps Script deployment.</p>`;
+        "<p class='dv-footer-note'>Check Wi-Fi or data and try again. If this keeps happening, your admin can review the Apps Script deployment.</p>`;
 
       playCardAnimation("warn");
     });
 }
 
-// ===============
-// Read tag from URL
-// ===============
+// ==============================
+// Init
+// ==============================
 function initDraftVerify() {
-  const params = new URLSearchParams(window.location.search);
-  const tagId = params.get("tag");
+  const tagId = getTagFromUrl();
 
-  if (!tagId) {
-    setStatus("info");
-    titleEl.textContent = "Scan a DraftVerify tag";
-    subEl.textContent =
-      "Hold your phone near a DraftVerify coupler or keg tag to begin.";
-    detailsEl.innerHTML =
-      "<p class='dv-label'>How it works</p>" +
-      "<p class='dv-value'>Tap the NA draft coupler, then tap the matching keg tag within 60 seconds to confirm the NA line is correctly paired.</p>";
-    playCardAnimation("info");
-    return;
-  }
+  // For debugging / sanity, show the tag in console
+  console.log("DraftVerify tag detected:", tagId);
 
   loadVerification(tagId);
 }
 
-// ===============
+// ==============================
 // PWA: service worker registration
-// ===============
+// ==============================
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
@@ -210,7 +234,6 @@ function registerServiceWorker() {
   }
 }
 
-// Init
 document.addEventListener("DOMContentLoaded", () => {
   initDraftVerify();
   registerServiceWorker();
