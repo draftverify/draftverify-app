@@ -230,7 +230,7 @@ body {
   font-size: 14px;
 }
 
-/* Details text styles (match backend HTML) */
+/* Details text styles */
 
 .dv-label {
   font-size: 11px;
@@ -376,7 +376,6 @@ body {
   }
 }
 
-/* Shake for mismatches / errors */
 .dv-animate-shake {
   animation: dv-shake 0.35s ease;
 }
