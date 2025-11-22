@@ -1,7 +1,7 @@
 // DraftVerify front-end (GitHub hosted)
 
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzskZPDUt_1O_ZyZIftnEG_cHLd3Ai1H5g5uFGKFwEuPzATTjesX4mqeC2oTnb4dbNgPw/exec";
+  "https://script.google.com/macros/s/AKfycbzaZ39JBVE6P2-u65WlQoU_vjCxxFwpG17CoTUokndT722PIiYJXhEtBzreokp61wJ9vg/exec";
 
 document.addEventListener("DOMContentLoaded", function () {
   var params = new URLSearchParams(window.location.search);
