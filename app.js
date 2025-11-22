@@ -4,7 +4,7 @@
 
 // 🔧 Your live Apps Script backend URL
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbyzrhkaf_HEqR-qOc2WgJhXZ4srhYZxoij6sQK8ZQPilCao6HxiRFuPU0ALSpMTJW-3Jw/exec";
+  "https://script.google.com/macros/s/AKfycbzu_4mYBpIrcVeRDmVj5SHw-Pf8jswpN_v4xZN72rZRXvogGBl8Y3cirXs5TQ_RL8fCCg/exec";
 
 // ==============================
 // Main loader
