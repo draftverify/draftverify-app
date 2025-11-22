@@ -4,7 +4,7 @@
 // ==============================
 
 const API_URL =
-  "https://script.google.com/macros/s/AKfycby25kK5DuooJjTPJF7JmDJP-NWPu8aqWeJzYUfVz4-RL3HcRSE3I3KK7ArA2nwKi5S7JA/exec";
+  "https://script.google.com/macros/s/AKfycbwKkSetsObgwrgJyLfzApkDpmdkKU0hhZtu8gp5TllwUbzQvbGxpRemCn7RuajQx26Dsw/exec";
 
 // DOM refs
 const app = document.getElementById("dv-app");
@@ -21,7 +21,6 @@ const loadingOverlay = document.getElementById("dv-loading-overlay");
 // Helper: extract tag from URL
 // ==============================
 function getTagFromUrl() {
-  // Primary: URLSearchParams
   try {
     const params = new URLSearchParams(window.location.search || "");
     const tag = params.get("tag");
@@ -30,7 +29,6 @@ function getTagFromUrl() {
     // ignore
   }
 
-  // Fallback: regex on full href (covers weird cases / redirects)
   const href = window.location.href || "";
   const match = href.match(/[?&]tag=([^&]+)/i);
   if (match && match[1]) {
@@ -48,7 +46,6 @@ function getTagFromUrl() {
 // Helper: status styling
 // ==============================
 function setStatus(status) {
-  // Reset classes
   app.classList.remove("dv-status-ok", "dv-status-warn", "dv-status-info");
   pillEl.classList.remove("dv-pill-ok", "dv-pill-warn", "dv-pill-info");
 
@@ -78,7 +75,6 @@ function setStatus(status) {
 
   pillTextEl.textContent = pillText;
 
-  // Update icon
   if (iconEl) {
     iconEl.innerHTML = `
       <div class="dv-icon-circle ${iconClass}">
@@ -110,7 +106,7 @@ function playCardAnimation(status) {
   if (!cardEl) return;
 
   cardEl.classList.remove("dv-animate-pop", "dv-animate-shake");
-  void cardEl.offsetWidth; // force reflow
+  void cardEl.offsetWidth;
 
   if (status === "warn") {
     cardEl.classList.add("dv-animate-shake");
@@ -124,11 +120,9 @@ function playCardAnimation(status) {
 // ==============================
 function loadVerification(tagId) {
   if (!tagId) {
-    // No tag → idle screen
     setStatus("info");
     titleEl.textContent = "Scan a tag";
-    subEl.textContent =
-      "Tap a coupler or keg tag to check the NA draft line.";
+    subEl.textContent = "Tap a coupler or keg tag to check the NA draft line.";
     detailsEl.innerHTML =
       "<p class='dv-label'>How it works</p>" +
       "<p class='dv-value'>Tap the NA draft coupler, then tap the matching keg tag within 60 seconds to confirm the line is correctly paired.</p>";
@@ -136,13 +130,12 @@ function loadVerification(tagId) {
     return;
   }
 
-  // Immediately show the tag ID so we know it was detected
   titleEl.textContent = "Reading tag…";
   subEl.textContent = "Please wait a moment.";
   detailsEl.innerHTML =
     "<p class='dv-label'>Tag ID</p>" +
     `<p class='dv-value'>${tagId}</p>` +
-    "<p class='dv-footer-note'>If this screen doesn’t update, check your connection.</p>`;
+    "<p class='dv-footer-note'>If this screen doesn’t update, check your connection.</p>";
 
   setStatus("info");
   playCardAnimation("info");
@@ -197,13 +190,12 @@ function loadVerification(tagId) {
       triggerHaptics("warn");
 
       titleEl.textContent = "UNABLE TO VERIFY";
-      subEl.textContent =
-        "There was a problem contacting the server.";
+      subEl.textContent = "There was a problem contacting the server.";
 
       detailsEl.innerHTML =
         "<p class='dv-label'>Tag ID</p>" +
         `<p class='dv-value'>${tagId}</p>` +
-        "<p class='dv-footer-note'>Check Wi-Fi or data and try again. If this keeps happening, your admin can review the Apps Script deployment.</p>`;
+        "<p class='dv-footer-note'>Check Wi-Fi or data and try again. If this keeps happening, your admin can review the Apps Script deployment.</p>";
 
       playCardAnimation("warn");
     });
@@ -214,10 +206,7 @@ function loadVerification(tagId) {
 // ==============================
 function initDraftVerify() {
   const tagId = getTagFromUrl();
-
-  // For debugging / sanity, show the tag in console
   console.log("DraftVerify tag detected:", tagId);
-
   loadVerification(tagId);
 }
 
